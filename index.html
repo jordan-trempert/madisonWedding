@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Henry and Madison's Wedding</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Basic styling for event details */
+        .event-details-container {
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .event-details-container h2 {
+            color: var(--dark-bg); /* Assuming you have this variable in styles.css */
+            margin-bottom: 10px;
+        }
+
+        .event-details-container p {
+            margin-bottom: 8px;
+        }
+
+        /* Styling for single content sections */
+        .single-content-container {
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            white-space: pre-line; /* Preserve line breaks */
+        }
+
+        .single-content-container h1 {
+            color: var(--dark-bg);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* RSVP Styling */
+        #rsvp-container {
+            padding: 20px;
+            text-align: center;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .guest-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .guest-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        .event-rsvp {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .rsvp-buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .rsvp-button {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        .rsvp-button.rsvp-no {
+            background-color: #f44336;
+        }
+        .rsvp-button:hover {
+            opacity: 0.8;
+        }
+        .rsvp-status {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero-overlay">
+    <header>
+        <div class="wrapper">
+            <div class="header-content">
+                <h1>Henry and Madison's Wedding</h1>
+                <nav>
+                    <ul>
+                        <li><a href="#" data-section="home">Home</a></li>
+                        <li><a href="#" data-section="gallery">Gallery</a></li>
+                        <li><a href="#" data-section="wedding-party">Wedding Party</a></li>
+                        <li><a href="#" data-section="qa">Q&A</a></li>
+                        <li><a href="#" data-section="travel">Travel</a></li>
+                        <li><a href="#" data-section="registry">Registry</a></li>
+                        <li><a href="#" data-section="thingstodo">Things to Do</a></li>
+                        <li><a href="#" data-section="rsvp">RSVP</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="card" id="content-card">
+                Loading content...
+            </div>
+        </div>
+    </header>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDUy12hCoQOZ1IyccIFdtLbUb_8gRGuKd8",
+        authDomain: "madisonwedding-b503a.firebaseapp.com",
+        projectId: "madisonwedding-b503a",
+        storageBucket: "madisonwedding-b503a.appspot.com",
+        messagingSenderId: "466167103112",
+        appId: "1:466167103112:web:955ca8da0c7aff7c1e693d",
+        measurementId: "G-FFX1HFC6T9",
+        databaseURL: "https://madisonwedding-b503a-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const database = getDatabase(app);
+
+    // Function to format date to words
+    function formatDateToWords(dateString) {
+        if (!dateString) return 'TBD';
+        const date = new Date(dateString);
+        // Manually adjust for EDT offset (-4 hours in milliseconds)
+        date.setTime(date.getTime() + (4 * 60 * 60 * 1000));
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    // Function to format time to 12-hour format
+    function formatTimeTo12Hour(timeString) {
+        if (!timeString) return 'TBD';
+        const [hours, minutes] = timeString.split(':');
+        let period = 'AM';
+        let hour = parseInt(hours, 10);
+        if (hour === 0) {
+            hour = 12;
+        } else if (hour === 12) {
+            period = 'PM';
+        } else if (hour > 12) {
+            hour -= 12;
+            period = 'PM';
+        }
+        return `${hour}:${minutes} ${period}`;
+    }
+
+    // Function to load and display event details
+    window.loadEventDetails = function() {
+        const eventsRef = ref(database, 'events');
+        const contentCard = document.getElementById('content-card');
+
+        onValue(eventsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                let eventDetailsHTML = '<div class="event-details-container">';
+
+                if (data.ceremony) {
+                    eventDetailsHTML += `
+                        <h2>Ceremony</h2>
+                        <p><strong>Date:</strong> ${formatDateToWords(data.ceremony.date)}</p>
+                        <p><strong>Time:</strong> ${formatTimeTo12Hour(data.ceremony.time)}</p>
+                        <p><strong>Location:</strong> ${data.ceremony.location || 'TBD'}</p>
+                    `;
+                }
+
+                if (data.rehearsal) {
+                    eventDetailsHTML += `
+                        <h2>Rehearsal Dinner</h2>
+                        <p><strong>Date:</strong> ${formatDateToWords(data.rehearsal.date)}</p>
+                        <p><strong>Time:</strong> ${formatTimeTo12Hour(data.rehearsal.time)}</p>
+                        <p><strong>Location:</strong> ${data.rehearsal.location || 'TBD'}</p>
+                    `;
+                }
+
+                if (data.cocktail) {
+                    eventDetailsHTML += `
+                        <h2>Cocktail Hour</h2>
+                        <p><strong>Date:</strong> ${formatDateToWords(data.cocktail.date)}</p>
+                        <p><strong>Time:</strong> ${formatTimeTo12Hour(data.cocktail.time)}</p>
+                        <p><strong>Location:</strong> ${data.cocktail.location || 'TBD'}</p>
+                    `;
+                }
+
+                eventDetailsHTML += '</div>';
+                contentCard.innerHTML = eventDetailsHTML;
+            } else {
+                contentCard.innerHTML = '<p>Event details are not available at this time.</p>';
+            }
+        }, (error) => {
+            console.error("Error loading event details:", error);
+            contentCard.innerHTML = '<p>Failed to load event details.</p>';
+        });
+    };
+
+    // Function to load single content from database
+    window.loadSingleContent = function(databasePath, containerId, title) {
+        const contentRef = ref(database, databasePath);
+        const contentCard = document.getElementById(containerId) || document.getElementById('content-card'); // Fallback to main card
+
+        onValue(contentRef, (snapshot) => {
+            const content = snapshot.val();
+            if (content) {
+                contentCard.innerHTML = `
+                    <div class="single-content-container">
+                        <h1>${title}</h1>
+                        <p>${content}</p>
+                    </div>
+                `;
+            } else {
+                contentCard.innerHTML = `<div class="single-content-container"><h1>${title}</h1><p>Content not available at this time.</p></div>`;
+            }
+        }, (error) => {
+            console.error(`Error loading ${title}:`, error);
+            contentCard.innerHTML = `<div class="single-content-container"><h1>${title}</h1><p>Failed to load content.</p></div>`;
+        });
+    };
+
+    // Load registry items function
+    window.loadRegistryItems = function() {
+        const registryRef = ref(database, 'registry');
+        onValue(registryRef, (snapshot) => {
+            const data = snapshot.val();
+            const container = document.getElementById('registry-items-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (data) {
+                Object.keys(data).forEach((key) => {
+                    const item = data[key];
+
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'registry-item';
+                    itemElement.innerHTML = `
+                        <div class="registry-item-image">
+                            <img src="${item.image || 'placeholder.jpg'}" alt="${item.name}" />
+                        </div>
+                        <div class="registry-item-details">
+                            <h3>${item.name}</h3>
+                            ${item.bought
+                                ? `<p style="color: green;"><strong>Already Purchased</strong></p>`
+                                : `
+                                    <button onclick="window.location.href='${item.url}'">Purchase Gift</button>
+                                    <button data-id="${key}" class="mark-bought-button">I Bought This</button>
+                                `}
+                        </div>
+                    `;
+                    container.appendChild(itemElement);
+                });
+
+                container.querySelectorAll('.mark-bought-button').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const itemId = button.getAttribute('data-id');
+                        const itemRef = ref(database, `registry/${itemId}`);
+                        await update(itemRef, { bought: true });
+                        loadRegistryItems();
+                    });
+                });
+            } else {
+                container.innerHTML = "<p>No registry items available at this time.</p>";
+            }
+        }, (error) => {
+            console.error("Error loading registry data:", error);
+        });
+    };
+
+    // New RSVP functionality
+    window.loadRSVPs = function() {
+        console.log("loadRSVPs function called");
+        const contentCard = document.getElementById('content-card');
+        contentCard.innerHTML = `
+            <h1>RSVP</h1>
+            <div id="rsvp-container">
+                <p>Loading RSVP system...</p>
+            </div>
+        `;
+
+        const rsvpRef = ref(database, 'rsvp/families');
+        onValue(rsvpRef, (snapshot) => {
+            console.log("onValue callback executed");
+            const data = snapshot.val();
+            console.log("Data from Firebase:", data);
+            const container = document.getElementById('rsvp-container');
+            if (!container) {
+                console.warn("rsvp-container element not found");
+                return;
+            }
+
+            // Store guest data for searching
+            window.guestData = data;
+            renderGuestList(data);
+        }, (error) => {
+            console.error("Error loading RSVP data:", error);
+        });
+    };
+
+    function renderGuestList(guestData) {
+        console.log("renderGuestList function called with data:", guestData);
+        const container = document.getElementById('rsvp-container');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search for your name..." />
+            </div>
+            <div id="guest-list-container" class="guest-list">
+                <div class="initial-instructions">Please search for your name to RSVP</div>
+            </div>
+        `;
+
+        // Add search functionality
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.trim().toLowerCase();
+                filterGuests(guestData, term);
+            });
+        } else {
+            console.warn("search-input element not found");
+        }
+    }
+
+    function filterGuests(guestData, searchTerm = '') {
+        console.log("filterGuests function called with searchTerm:", searchTerm, "and data:", guestData);
+        const guestListContainer = document.getElementById('guest-list-container');
+        if (!guestListContainer) return;
+
+        guestListContainer.innerHTML = '';
+
+        if (!guestData || searchTerm === '') {
+            guestListContainer.innerHTML = '<div class="initial-instructions">Please search for your name to RSVP</div>';
+            return;
+        }
+
+        let foundGuests = false;
+
+        // Loop through all families and guests
+        Object.keys(guestData).forEach(familyName => {
+            const family = guestData[familyName];
+            Object.keys(family).forEach(guestKey => {
+                const guest = family[guestKey];
+                const fullName = guest.name.toLowerCase();
+                console.log("Checking guest:", guest.name);
+
+                // Check if guest matches search term
+                if (fullName.includes(searchTerm)) {
+                    foundGuests = true;
+                    console.log("Guest found:", guest.name);
+
+                    const guestCard = document.createElement('div');
+                    guestCard.className = 'guest-card';
+                    guestCard.innerHTML = `
+                        <div class="guest-name">${guest.name}</div>
+                        ${renderEventRSVP('Ceremony', guest.cermony, familyName, guestKey, 'cermony')}
+                        ${guest.rehearsalDinner && guest.rehearsalDinner.isInvited ?
+                            renderEventRSVP('Rehearsal Dinner', guest.rehearsalDinner, familyName, guestKey, 'rehearsalDinner') : ''}
+                        ${guest.cocktailHour && guest.cocktailHour.isInvited ?
+                            renderEventRSVP('Cocktail Hour', guest.cocktailHour, familyName, guestKey, 'cocktailHour') : ''}
+                    `;
+                    guestListContainer.appendChild(guestCard);
+                }
+            });
+        });
+
+        if (!foundGuests && searchTerm !== '') {
+            guestListContainer.innerHTML = '<div class="no-results">No guests found matching your search</div>';
+        }
+    }
+
+    function renderEventRSVP(eventName, eventData, familyName, guestKey, eventType) {
+        const currentStatus = eventData.isRSVP ? 'Yes' : (eventData.isRSVP === false ? 'No' : 'Pending');
+        console.log(`renderEventRSVP for ${eventName}, status: ${currentStatus}, family: ${familyName}, guest: ${guestKey}, type: ${eventType}`);
+        return `
+            <div class="event-rsvp">
+                <div class="event-title">${eventName}</div>
+                <div class="rsvp-status">Current RSVP: ${currentStatus}</div>
+                <div class="rsvp-buttons">
+                    <button class="rsvp-button rsvp-yes"
+                            onclick="updateRSVP('${familyName}', '${guestKey}', '${eventType}', true)">
+                        Accept
+                    </button>
+                    <button class="rsvp-button rsvp-no"
+                            onclick="updateRSVP('${familyName}', '${guestKey}', '${eventType}', false)">
+                        Decline
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    window.updateRSVP = async function(familyName, guestKey, eventType, response) {
+        console.log(`updateRSVP called for family: ${familyName}, guest: ${guestKey}, event: ${eventType}, response: ${response}`);
+        try {
+            const updates = {};
+            updates[`rsvp/families/${familyName}/${guestKey}/${eventType}/isRSVP`] = response;
+
+            await update(ref(database), updates);
+            alert('RSVP updated successfully!');
+
+            // Re-apply the current search filter to refresh the display
+            const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+            filterGuests(window.guestData, searchTerm);
+        } catch (error) {
+            console.error('Error updating RSVP:', error);
+            alert('There was an error updating your RSVP. Please try again.');
+        }
+    };
+
+
+    window.loadGallery = function() {
+        const galleryRef = ref(database, 'gallery/images');
+        const contentCard = document.getElementById('content-card');
+
+        contentCard.innerHTML = `
+            <div class="gallery-container">
+                <h1>Photo Gallery</h1>
+                <div class="slideshow-container" id="slideshow-container">
+                    <div class="loading-message">Loading images...</div>
+                </div>
+            </div>
+        `;
+
+        onValue(galleryRef, (snapshot) => {
+            const data = snapshot.val();
+            const container = document.getElementById('slideshow-container');
+
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = '<p>No images available in the gallery yet.</p>';
+                return;
+            }
+
+            // Convert object to array
+            const images = Object.values(data);
+
+            // Build slideshow HTML
+            let slideshowHTML = '';
+            images.forEach((image, index) => {
+                slideshowHTML += `
+                    <div class="slide fade">
+                        <img src="${image.url}" alt="Gallery image ${index + 1}">
+                        <div class="caption">Image ${index + 1}</div>
+                    </div>
+                `;
+            });
+
+            // Add navigation arrows
+            slideshowHTML += `
+                <a class="prev" onclick="plusSlides(-1)">❮</a>
+                <a class="next" onclick="plusSlides(1)">❯</a>
+            `;
+
+            container.innerHTML = slideshowHTML;
+
+            // Add dots indicator
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'dots';
+            for (let i = 0; i < images.length; i++) {
+                dotsContainer.innerHTML += `<span class="dot" onclick="currentSlide(${i + 1})"></span>`;
+            }
+            container.parentNode.appendChild(dotsContainer);
+
+            // Initialize slideshow
+            showSlides(1);
+
+        }, (error) => {
+            console.error("Error loading gallery:", error);
+            document.getElementById('slideshow-container').innerHTML = '<p>Failed to load gallery.</p>';
+        });
+    };
+
+    // Slideshow variables
+    let slideIndex = 1;
+
+    // Next/previous controls
+    window.plusSlides = function(n) {
+        showSlides(slideIndex += n);
+    };
+
+    // Thumbnail image controls
+    window.currentSlide = function(n) {
+        showSlides(slideIndex = n);
+    };
+
+    function showSlides(n) {
+        let i;
+        const slides = document.getElementsByClassName("slide");
+        const dots = document.getElementsByClassName("dot");
+
+        if (slides.length === 0) return;
+
+        if (n > slides.length) {slideIndex = 1}
+        if (n < 1) {slideIndex = slides.length}
+
+        for (i = 0; i < slides.length; i++) {
+            slides[i].style.display = "none";
+        }
+        for (i = 0; i < dots.length; i++) {
+            dots[i].className = dots[i].className.replace(" active", "");
+        }
+
+        slides[slideIndex-1].style.display = "block";
+        dots[slideIndex-1].className += " active";
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("DOM fully loaded.");
+
+         const secretCode = 'pineapple';
+        let inputBuffer = '';
+
+        // Listen for key presses
+        document.addEventListener('keydown', function(e) {
+            // Add the pressed key to the buffer
+            inputBuffer += e.key.toLowerCase();
+
+            // Keep only the last N characters (length of secret code)
+            if (inputBuffer.length > secretCode.length) {
+                inputBuffer = inputBuffer.substring(inputBuffer.length - secretCode.length);
+            }
+
+            // Check if buffer matches secret code
+            if (inputBuffer === secretCode) {
+                // Redirect to admin page
+                window.location.href = 'admin.html';
+            }
+        });
+
+        const contentMap = {
+            home: { isInitial: true }, // Mark home as initial view
+             gallery: {
+                callback: loadGallery
+            },
+            rsvp: {
+                html: `
+                    <h1>RSVP</h1>
+                    <div id="rsvp-container">
+                        <p>Loading RSVP system...</p>
+                    </div>
+                `,
+                callback: loadRSVPs
+            },
+            "wedding-party": { title: 'Wedding Party', dbPath: 'weddingParty/content' },
+            qa: { title: 'Q&A', dbPath: 'qa/content' },
+            travel: { title: 'Travel Information', dbPath: 'travel/content' },
+            registry: {
+                html: `
+                    <h1>Wedding Registry</h1>
+                    <div id="registry-items-container"></div>
+                    <div class="venmo-container">
+                        <h3>Contribute via Venmo</h3>
+                        <p>Send your contributions to: <strong>@HenMorr36</strong></p>
+                    </div>
+                `,
+                callback: loadRegistryItems
+            },
+            thingstodo: { title: 'Things to Do', dbPath: 'things/content' },
+            events: {
+                title: 'Event Details',
+                callback: loadEventDetails
+            }
+        };
+
+        // Function to load the initial view (event details)
+        function loadInitialView() {
+            console.log("Loading initial view (event details)");
+            if (typeof loadEventDetails === 'function') {
+                loadEventDetails();
+            } else {
+                document.getElementById('content-card').innerHTML = "<h1>Event Details</h1><p>Loading...</p>";
+            }
+        }
+
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const section = link.getAttribute('data-section');
+                console.log(`Navigating to section: ${section}`);
+
+                const contentInfo = contentMap[section];
+                const contentCard = document.getElementById('content-card');
+
+                if (!contentInfo) {
+                    contentCard.innerHTML = "<p>Content not found.</p>";
+                    return;
+                }
+
+                // Handle home/initial view
+                if (contentInfo.isInitial) {
+                    loadInitialView();
+                    return;
+                }
+
+                // Handle sections with HTML and callbacks
+                if (contentInfo.html && contentInfo.callback) {
+                    contentCard.innerHTML = contentInfo.html;
+                    if (typeof contentInfo.callback === 'function') {
+                        contentInfo.callback();
+                    }
+                    return;
+                }
+
+                // Handle simple HTML content
+                if (typeof contentInfo === 'string') {
+                    contentCard.innerHTML = contentInfo;
+                    return;
+                }
+
+                // Handle database-loaded content
+                if (contentInfo.dbPath && contentInfo.title) {
+                    window.loadSingleContent(contentInfo.dbPath, 'content-card', contentInfo.title);
+                    return;
+                }
+
+                // Handle callback-only sections
+                if (contentInfo.callback) {
+                    if (typeof contentInfo.callback === 'function') {
+                        contentInfo.callback();
+                    }
+                    return;
+                }
+
+                contentCard.innerHTML = "<p>Content not found.</p>";
+            });
+        });
+
+        // Load initial content based on URL hash or default to home
+        const initialSection = window.location.hash ? window.location.hash.substring(1) : 'home';
+        console.log(`Initial section: ${initialSection}`);
+
+        if (initialSection === 'home' || initialSection === '') {
+            loadInitialView();
+        } else if (contentMap[initialSection]) {
+            const contentInfo = contentMap[initialSection];
+            const contentCard = document.getElementById('content-card');
+
+            if (contentInfo.html) {
+                contentCard.innerHTML = contentInfo.html;
+            }
+
+            if (contentInfo.callback) {
+                if (typeof contentInfo.callback === 'function') {
+                    contentInfo.callback();
+                }
+            } else if (contentInfo.dbPath && contentInfo.title) {
+                window.loadSingleContent(contentInfo.dbPath, 'content-card', contentInfo.title);
+            }
+        } else {
+            loadInitialView();
+        }
+    });
+</script>
+
+<footer>
+    <div class="footer-image">
+        <img src="images/bottom%20image.webp" alt="Footer Banner">
+    </div>
+</footer>
+
+</body>
+</html>

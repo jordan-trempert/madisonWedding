@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #565826;
+            --secondary-color: #ffe58a;
+            --text-color: #333;
+            --light-bg: rgba(255, 255, 255, 0.9);
+            --dark-bg: rgba(86, 88, 38, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--dark-bg);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 15px;
+        }
+
+        .admin-section {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        #admin-search {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .guest-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .guest-table th, .guest-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .guest-table th {
+            background-color: var(--dark-bg);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        .guest-table tr:nth-child(even) {
+            background-color: rgba(86, 88, 38, 0.05);
+        }
+
+        .guest-table tr:hover {
+            background-color: rgba(86, 88, 38, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .btn-save {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-cancel {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #ff5722;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background-color: #FFC107;
+            color: #333;
+        }
+
+        .status-confirmed {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .status-declined {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .edit-form input, .edit-form select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--dark-bg);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 3px solid var(--dark-bg);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .guest-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        /* Styles for individual settings sections (already included, but for completeness) */
+        .settings-section {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .settings-section h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .settings-section label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .settings-section input[type="text"],
+        .settings-section input[type="url"],
+        .settings-section textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .settings-section button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .gallery-item-preview {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .wedding-party-member {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .wedding-party-member img {
+            max-width: 100px;
+            height: auto;
+            border-radius: 50%;
+        }
+
+        .wedding-party-details {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="admin-container">
+        <h1>Wedding Admin Panel</h1>
+        <p>Manage guest list, RSVPs, and event details</p>
+    </div>
+</header>
+
+<div class="admin-container">
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-number" id="total-guests">0</div>
+            <div class="stat-label">Total Guests</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="confirmed-guests">0</div>
+            <div class="stat-label">Confirmed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="pending-guests">0</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="declined-guests">0</div>
+            <div class="stat-label">Declined</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="guest-management">Guest Management</div>
+        <div class="tab" data-tab="rsvp-tracking">RSVP Tracking</div>
+        <div class="tab" data-tab="event-settings">Event Settings</div>
+        <div class="tab" data-tab="travel-settings">Travel Settings</div>
+        <div class="tab" data-tab="qa-settings">Q&A Settings</div>
+        <div class="tab" data-tab="things-settings">Things to Do Settings</div>
+        <div class="tab" data-tab="registry-settings">Registry Settings</div>
+        <div class="tab" data-tab="wedding-party-settings">Wedding Party Settings</div>
+        <div class="tab" data-tab="gallery-settings">Gallery Settings</div>
+    </div>
+
+    <div class="tab-content active" id="guest-management">
+        <div class="admin-section">
+            <h2>Guest Management</h2>
+
+            <div style="background-color: var(--light-bg); border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                <h3>Add New Guest</h3>
+                <form id="add-guest-form">
+                    <div style="margin-bottom: 15px;">
+                        <label for="new-guest-name">Name</label>
+                        <input type="text" id="new-guest-name" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="new-guest-household">Household (Optional)</label>
+                        <input type="text" id="new-guest-household" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label for="new-guest-ceremony">Ceremony</label>
+                            <select id="new-guest-ceremony" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="invited">Invited</option>
+                                <option value="not-invited" selected>Not Invited</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="new-guest-rehearsal">Rehearsal Dinner</label>
+                            <select id="new-guest-rehearsal" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="invited">Invited</option>
+                                <option value="not-invited" selected>Not Invited</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="new-guest-cocktail">Cocktail Hour</label>
+                            <select id="new-guest-cocktail" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="invited">Invited</option>
+                                <option value="not-invited" selected>Not Invited</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-save">Add Guest</button>
+                </form>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="admin-search" placeholder="Search guests by name...">
+            </div>
+            <div class="table-responsive">
+                <table class="guest-table">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Household</th>
+                        <th>Ceremony</th>
+                        <th>Rehearsal</th>
+                        <th>Cocktail</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="guest-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="rsvp-tracking">
+        <div class="admin-section">
+            <h2>RSVP Tracking</h2>
+            <div class="search-container">
+                <input type="text" id="rsvp-search" placeholder="Filter RSVPs...">
+            </div>
+            <div class="table-responsive">
+                <table class="guest-table">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Ceremony</th>
+                        <th>Rehearsal</th>
+                        <th>Cocktail</th>
+                        <th>Last Updated</th>
+                    </tr>
+                    </thead>
+                    <tbody id="rsvp-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="event-settings">
+        <div class="admin-section">
+            <h2>Event Settings</h2>
+            <form id="event-settings-form">
+                <div style="margin-bottom: 20px;">
+                    <h3>Ceremony Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                            <label for="ceremony-date">Date</label>
+                            <input type="date" id="ceremony-date" name="ceremony-date">
+                        </div>
+                        <div>
+                            <label for="ceremony-time">Time</label>
+                            <input type="time" id="ceremony-time" name="ceremony-time">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="ceremony-location">Location</label>
+                        <input type="text" id="ceremony-location" name="ceremony-location" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3>Rehearsal Dinner</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                            <label for="rehearsal-date">Date</label>
+                            <input type="date" id="rehearsal-date" name="rehearsal-date">
+                        </div>
+                        <div>
+                            <label for="rehearsal-time">Time</label>
+                            <input type="time" id="rehearsal-time" name="rehearsal-time">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="rehearsal-location">Location</label>
+                        <input type="text" id="rehearsal-location" name="rehearsal-location" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3>Cocktail Hour</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                            <label for="cocktail-date">Date</label>
+                            <input type="date" id="cocktail-date" name="cocktail-date">
+                        </div>
+                        <div>
+                            <label for="cocktail-time">Time</label>
+                            <input type="time" id="cocktail-time" name="cocktail-time">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="cocktail-location">Location</label>
+                        <input type="text" id="cocktail-location" name="cocktail-location" style="width: 100%;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-save">Save Settings</button>
+            </form>
+        </div>
+    </div>
+
+
+
+    <div class="tab-content" id="travel-settings">
+        <div class="admin-section">
+            <h2>Travel Settings</h2>
+            <form id="travel-settings-form">
+                <div style="margin-bottom: 15px;">
+                    <label for="travel-content">Travel Information Content</label>
+                    <textarea id="travel-content" rows="15" style="width: 100%;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-save">Save Travel Content</button>
+            </form>
+        </div>
+    </div>
+    <div class="tab-content" id="qa-settings">
+        <div class="admin-section">
+            <h2>Q&A Settings</h2>
+            <form id="qa-settings-form">
+                <div style="margin-bottom: 15px;">
+                    <label for="qa-content">Q&A Content</label>
+                    <textarea id="qa-content" rows="15" style="width: 100%;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-save">Save Q&A Content</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-content" id="things-settings">
+        <div class="admin-section">
+            <h2>Things to Do Settings</h2>
+            <form id="things-settings-form">
+                <div style="margin-bottom: 15px;">
+                    <label for="things-content">Things to Do Content</label>
+                    <textarea id="things-content" rows="10" style="width: 100%;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-save">Save Things to Do Content</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-content" id="registry-settings">
+        <div class="admin-section">
+            <h2>Registry Settings</h2>
+            <div id="registry-items-admin-container">
+            </div>
+            <h3>Add New Registry Item</h3>
+            <form id="add-registry-item-form">
+                <div style="margin-bottom: 15px;">
+                    <label for="new-registry-name">Item Name</label>
+                    <input type="text" id="new-registry-name" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="new-registry-url">Purchase URL</label>
+                    <input type="url" id="new-registry-url" style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="new-registry-image">Image URL (Optional)</label>
+                    <input type="url" id="new-registry-image" style="width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-save">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-content" id="wedding-party-settings">
+        <div class="admin-section">
+            <h2>Wedding Party Settings</h2>
+            <form id="wedding-party-settings-form">
+                <div style="margin-bottom: 15px;">
+                    <label for="wedding-party-content">Wedding Party Content</label>
+                    <textarea id="wedding-party-content" rows="15" style="width: 100%;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-save">Save Wedding Party Content</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-content" id="gallery-settings">
+        <div class="admin-section">
+            <h2>Gallery Settings</h2>
+            <div id="gallery-images-container">
+            </div>
+            <h3>Add New Image</h3>
+            <p>Upload to <a href="https://postimg.cc">postimg.cc</a> and copy the direct link</p>
+            <form id="add-gallery-image-form">
+                <div style="margin-bottom: 15px;">
+                    <label for="new-gallery-image-url">Image URL</label>
+                    <input type="url" id="new-gallery-image-url" required style="width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-save">Add Image</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, onValue, update, remove, push, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDUy12hCoQOZ1IyccIFdtLbUb_8gRGuKd8",
+        authDomain: "madisonwedding-b503a.firebaseapp.com",
+        projectId: "madisonwedding-b503a",
+        storageBucket: "madisonwedding-b503a.appspot.com",
+        messagingSenderId: "466167103112",
+        appId: "1:466167103112:web:955ca8da0c7aff7c1e693d",
+        measurementId: "G-FFX1HFC6T9",
+        databaseURL: "https://madisonwedding-b503a-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Load guest data
+    function loadGuestData() {
+        const guestRef = ref(database, 'rsvp/families');
+        onValue(guestRef, (snapshot) => {
+            const data = snapshot.val();
+            const guestTableBody = document.getElementById('guest-table-body');
+            const rsvpTableBody = document.getElementById('rsvp-table-body');
+
+            guestTableBody.innerHTML = '';
+            rsvpTableBody.innerHTML = '';
+
+            let totalGuests = 0;
+            let confirmedGuests = 0;
+            let pendingGuests = 0;
+            let declinedGuests = 0;
+
+
+
+            if (data) {
+                Object.keys(data).forEach(familyName => {
+                    const family = data[familyName];
+                    Object.keys(family).forEach(guestKey => {
+                        const guest = family[guestKey];
+                        totalGuests++;
+
+                        // Count RSVP statuses
+                        if (guest.cermony) {
+                            if (guest.cermony.isRSVP === true) confirmedGuests++;
+                            else if (guest.cermony.isRSVP === false) declinedGuests++;
+                            else pendingGuests++;
+                        }
+
+                        // Create row for guest managementtable
+                        const guestRow = document.createElement('tr');
+                        guestRow.innerHTML = `
+                            <td>${guest.name}</td>
+                            <td>${guest.household || 'N/A'}</td>
+                            <td>${renderRSVPCell(guest.cermony)}</td>
+                            <td>${guest.rehearsalDinner ? renderRSVPCell(guest.rehearsalDinner) : 'N/A'}</td>
+                            <td>${guest.cocktailHour ? renderRSVPCell(guest.cocktailHour) : 'N/A'}</td>
+                            <td class="action-buttons">
+                                <button class="btn btn-edit" data-family="${familyName}" data-guest="${guestKey}">Edit</button>
+                            </td>
+                        `;
+                        guestTableBody.appendChild(guestRow);
+
+                        // Create row for RSVP tracking table
+                        const rsvpRow = document.createElement('tr');
+                        rsvpRow.innerHTML = `
+                            <td>${guest.name}</td>
+                            <td>${renderRSVPCell(guest.cermony)}</td>
+                            <td>${guest.rehearsalDinner ? renderRSVPCell(guest.rehearsalDinner) : 'N/A'}</td>
+                            <td>${guest.cocktailHour ? renderRSVPCell(guest.cocktailHour) : 'N/A'}</td>
+                            <td>${new Date().toLocaleString()}</td>
+                        `;
+                        rsvpTableBody.appendChild(rsvpRow);
+                    });
+                });
+            }
+
+            // Update stats
+            document.getElementById('total-guests').textContent = totalGuests;
+            document.getElementById('confirmed-guests').textContent = confirmedGuests;
+            document.getElementById('pending-guests').textContent = pendingGuests;
+            document.getElementById('declined-guests').textContent = declinedGuests;
+
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const familyName = btn.dataset.family;
+                    const guestKey = btn.dataset.guest;
+                    editGuest(familyName, guestKey);
+                });
+            });
+
+            // Add search functionality
+            document.getElementById('admin-search').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                filterTableRows('guest-table-body', term);
+            });
+
+            document.getElementById('rsvp-search').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                filterTableRows('rsvp-table-body', term);
+            });
+        });
+    }
+
+    document.getElementById('add-guest-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('new-guest-name').value.trim();
+    const household = document.getElementById('new-guest-household').value.trim();
+    const ceremonyStatus = document.getElementById('new-guest-ceremony').value;
+    const rehearsalStatus = document.getElementById('new-guest-rehearsal').value;
+    const cocktailStatus = document.getElementById('new-guest-cocktail').value;
+
+    if (!name) {
+        alert('Please enter the guest\'s name.');
+        return;
+    }
+
+    const newGuest = {
+        name: name,
+        household: household || null,
+        cermony: { isInvited: ceremonyStatus === 'invited', isRSVP: null },
+        rehearsalDinner: { isInvited: rehearsalStatus === 'invited', isRSVP: null },
+        cocktailHour: { isInvited: cocktailStatus === 'invited', isRSVP: null }
+    };
+
+    const guestListRef = ref(database, 'rsvp/families');
+    const newGuestRef = push(guestListRef); // Use push to generate a unique key
+
+    set(newGuestRef, { [newGuestRef.key]: newGuest }) // Structure to fit your data model
+        .then(() => {
+            alert('New guest added successfully!');
+            document.getElementById('add-guest-form').reset();
+            loadGuestData(); // Reload the guest list
+        })
+        .catch(error => {
+            console.error('Error adding guest:', error);
+            alert('There was an error adding the guest.');
+        });
+});
+
+    function renderRSVPCell(eventData) {
+        if (!eventData || !eventData.isInvited) return 'Not Invited';
+
+        if (eventData.isRSVP === true) {
+            return '<span class="status-indicator status-confirmed">Confirmed</span>';
+        } else if (eventData.isRSVP === false) {
+            return '<span class="status-indicator status-declined">Declined</span>';
+        } else {
+            return '<span class="status-indicator status-pending">Pending</span>';
+        }
+    }
+
+    function filterTableRows(tableId, searchTerm) {
+        const rows = document.querySelectorAll(`#${tableId} tr`);
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    }
+
+    function editGuest(familyName, guestKey) {
+    const guestRef = ref(database, `rsvp/families/${familyName}/${guestKey}`);
+    onValue(guestRef, (snapshot) => {
+        const guest = snapshot.val();
+        const row = document.querySelector(`button[data-family="${familyName}"][data-guest="${guestKey}"]`).closest('tr');
+
+        row.innerHTML = `
+            <td><input type="text" value="${guest.name}" id="edit-name"></td>
+            <td><input type="text" value="${guest.household || ''}" id="edit-household"></td>
+            <td>
+                <select id="edit-ceremony">
+                    <option value="not-invited" ${!guest.cermony?.isInvited ? 'selected' : ''}>Not Invited</option>
+                    <option value="invited" ${guest.cermony?.isInvited ? 'selected' : ''}>Invited</option>
+                    <option value="confirmed" ${guest.cermony?.isRSVP === true ? 'selected' : ''}>Confirmed</option>
+                    <option value="declined" ${guest.cermony?.isRSVP === false ? 'selected' : ''}>Declined</option>
+                </select>
+            </td>
+            <td>
+                <select id="edit-rehearsal">
+                    <option value="not-invited" ${!guest.rehearsalDinner?.isInvited ? 'selected' : ''}>Not Invited</option>
+                    <option value="invited" ${guest.rehearsalDinner?.isInvited ? 'selected' : ''}>Invited</option>
+                    <option value="confirmed" ${guest.rehearsalDinner?.isRSVP === true ? 'selected' : ''}>Confirmed</option>
+                    <option value="declined" ${guest.rehearsalDinner?.isRSVP === false ? 'selected' : ''}>Declined</option>
+                </select>
+            </td>
+            <td>
+                <select id="edit-cocktail">
+                    <option value="not-invited" ${!guest.cocktailHour?.isInvited ? 'selected' : ''}>Not Invited</option>
+                    <option value="invited" ${guest.cocktailHour?.isInvited ? 'selected' : ''}>Invited</option>
+                    <option value="confirmed" ${guest.cocktailHour?.isRSVP === true ? 'selected' : ''}>Confirmed</option>
+                    <option value="declined" ${guest.cocktailHour?.isRSVP === false ? 'selected' : ''}>Declined</option>
+                </select>
+            </td>
+            <td class="action-buttons">
+                <button class="btn btn-save" data-family="${familyName}" data-guest="${guestKey}">Save</button>
+                <button class="btn btn-cancel">Cancel</button>
+                <button class="btn btn-delete" data-family="${familyName}" data-guest="${guestKey}">Remove</button>
+            </td>
+        `;
+
+        // Add event listeners to the new buttons within the edit row
+        row.querySelector('.btn-save').addEventListener('click', () => {
+            saveGuestEdits(familyName, guestKey);
+        });
+
+        row.querySelector('.btn-cancel').addEventListener('click', () => {
+            loadGuestData(); // Reload the data to cancel edits
+        });
+
+        row.querySelector('.btn-delete').addEventListener('click', () => {
+            removeGuest(familyName, guestKey);
+        });
+    });
+}
+
+    function saveGuestEdits(familyName, guestKey) {
+    const updates = {};
+    const basePath = `rsvp/families/${familyName}/${guestKey}`;
+
+    // Get edited values
+    const name = document.getElementById('edit-name').value;
+    const household = document.getElementById('edit-household').value;
+    const ceremonyValue = document.getElementById('edit-ceremony').value;
+    const rehearsalValue = document.getElementById('edit-rehearsal').value;
+    const cocktailValue = document.getElementById('edit-cocktail').value;
+
+    // Update name and household
+    updates[`${basePath}/name`] = name;
+    updates[`${basePath}/household`] = household;
+
+    // Update ceremony details
+    if (ceremonyValue === 'not-invited') {
+        updates[`${basePath}/cermony`] = { isInvited: false, isRSVP: null };
+    } else if (ceremonyValue === 'invited') {
+        updates[`${basePath}/cermony`] = { isInvited: true, isRSVP: null };
+    }
+     else if (ceremonyValue === 'confirmed') {
+        updates[`${basePath}/cermony`] = { isInvited: true, isRSVP: true };
+    }
+    else if (ceremonyValue === 'declined') {
+         updates[`${basePath}/cermony`] = { isInvited: true, isRSVP: false };
+    }
+
+    // Update rehearsal dinner details
+     if (rehearsalValue === 'not-invited') {
+        updates[`${basePath}/rehearsalDinner`] = { isInvited: false, isRSVP: null };
+    } else if (rehearsalValue === 'invited') {
+        updates[`${basePath}/rehearsalDinner`] = { isInvited: true, isRSVP: null };
+    }
+    else if (rehearsalValue === 'confirmed') {
+        updates[`${basePath}/rehearsalDinner`] = { isInvited: true, isRSVP: true };
+    }
+    else if (rehearsalValue === 'declined') {
+        updates[`${basePath}/rehearsalDinner`] = { isInvited: true, isRSVP: false };
+    }
+
+    // Update cocktail hour details
+    if (cocktailValue === 'not-invited') {
+        updates[`${basePath}/cocktailHour`] = { isInvited: false, isRSVP: null };
+    } else if (cocktailValue === 'invited') {
+        updates[`${basePath}/cocktailHour`] = { isInvited: true, isRSVP: null };
+    }
+    else if (cocktailValue === 'confirmed') {
+        updates[`${basePath}/cocktailHour`] = { isInvited: true, isRSVP: true };
+    }
+    else if (cocktailValue === 'declined') {
+        updates[`${basePath}/cocktailHour`] = { isInvited: true, isRSVP: false };
+    }
+
+    // Perform the update
+    update(ref(database), updates)
+        .then(() => {
+            alert('Guest details updated successfully!');
+            loadGuestData(); // Reload guest data to reflect changes
+        })
+        .catch(error => {
+            console.error('Error updating guest:', error);
+            alert('Failed to update guest details.');
+        });
+}
+
+    function removeGuest(familyName, guestKey) {
+        const guestRef = ref(database, `rsvp/families/${familyName}/${guestKey}`);
+        remove(guestRef)
+            .then(() => {
+                alert('Guest removed successfully!');
+                loadGuestData(); // Reload guest data
+            })
+            .catch(error => {
+                console.error('Error removing guest:', error);
+                alert('Failed to remove guest.');
+            });
+    }
+
+    // Load event settings
+    function loadEventSettings() {
+        const eventSettingsRef = ref(database, 'event');
+        onValue(eventSettingsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('ceremony-date').value = data.ceremony?.date || '';
+                document.getElementById('ceremony-time').value = data.ceremony?.time || '';
+                document.getElementById('ceremony-location').value = data.ceremony?.location || '';
+                document.getElementById('rehearsal-date').value = data.rehearsalDinner?.date || '';
+                document.getElementById('rehearsal-time').value = data.rehearsalDinner?.time || '';
+                document.getElementById('rehearsal-location').value = data.rehearsalDinner?.location || '';
+                 document.getElementById('cocktail-date').value = data.cocktailHour?.date || '';
+                document.getElementById('cocktail-time').value = data.cocktailHour?.time || '';
+                document.getElementById('cocktail-location').value = data.cocktailHour?.location || '';
+            }
+        });
+    }
+
+    // Save event settings
+    document.getElementById('event-settings-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const updates = {
+            'event/ceremony/date': document.getElementById('ceremony-date').value,
+            'event/ceremony/time': document.getElementById('ceremony-time').value,
+            'event/ceremony/location': document.getElementById('ceremony-location').value,
+            'event/rehearsalDinner/date': document.getElementById('rehearsal-date').value,
+            'event/rehearsalDinner/time': document.getElementById('rehearsal-time').value,
+            'event/rehearsalDinner/location': document.getElementById('rehearsal-location').value,
+            'event/cocktailHour/date': document.getElementById('cocktail-date').value,
+            'event/cocktailHour/time': document.getElementById('cocktail-time').value,
+            'event/cocktailHour/location': document.getElementById('cocktail-location').value,
+        };
+
+        update(ref(database), updates)
+            .then(() => {
+                alert('Event settings saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error saving event settings:', error);
+                alert('Failed to save event settings.');
+            });
+    });
+
+
+
+    // Load travel settings
+    function loadTravelSettings() {
+        const travelSettingsRef = ref(database, 'travel');
+        onValue(travelSettingsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('travel-content').value = data.content || '';
+            }
+        });
+    }
+
+    // Save travel settings
+    document.getElementById('travel-settings-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const content = document.getElementById('travel-content').value;
+
+        update(ref(database, 'travel'), { content: content })
+            .then(() => {
+                alert('Travel settings saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error saving travel settings:', error);
+                alert('Failed to save travel settings.');
+            });
+    });
+
+    // Load Q&A settings
+    function loadQASettings() {
+        const qaSettingsRef = ref(database, 'qa');
+        onValue(qaSettingsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('qa-content').value = data.content || '';
+            }
+        });
+    }
+
+    // Save Q&A settings
+    document.getElementById('qa-settings-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const content = document.getElementById('qa-content').value;
+
+        update(ref(database, 'qa'), { content: content })
+            .then(() => {
+                alert('Q&A settings saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error saving Q&A settings:', error);
+                alert('Failed to save Q&A settings.');
+            });
+    });
+
+    // Load "Things to Do" settings
+    function loadThingsSettings() {
+        const thingsSettingsRef = ref(database, 'things');
+        onValue(thingsSettingsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('things-content').value = data.content || '';
+            }
+        });
+    }
+
+    // Save "Things to Do" settings
+    document.getElementById('things-settings-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const content = document.getElementById('things-content').value;
+
+        update(ref(database, 'things'), { content: content })
+            .then(() => {
+                alert('Things to Do settings saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error saving Things to Do settings:', error);
+                alert('Failed to save Things to Do settings.');
+            });
+    });
+
+    // Registry functions
+let registryItems = {};
+
+// Function to render registry items
+function renderRegistryItems() {
+    const container = document.getElementById('registry-items-admin-container');
+    container.innerHTML = ''; // Clear previous content
+
+    if (registryItems) {
+        Object.entries(registryItems).forEach(([key, item]) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('registry-item-admin');
+            itemDiv.innerHTML = `
+                <div style="display:flex; gap: 15px; align-items: center; margin-bottom: 10px;">
+                    ${item.image ? `<img src="${item.image}" alt="${item.name}" style="max-width: 100px; height: auto; border-radius: 4px;">` : ''}
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 5px;">${item.name}</h4>
+                        ${item.url ? `<p style="margin-bottom: 5px;"><a href="${item.url}" target="_blank">Purchase Link</a></p>` : ''}
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn ${item.bought ? 'btn-save' : 'btn-edit'}" data-key="${key}" data-action="toggle-bought">
+                            ${item.bought ? 'Mark as Available' : 'Mark as Purchased'}
+                        </button>
+                        <button class="btn btn-edit" data-key="${key}" data-action="edit">Edit</button>
+                        <button class="btn btn-delete" data-key="${key}" data-action="delete">Delete</button>
+                    </div>
+                </div>
+                <div style="margin-top: 5px;">
+                    Status: <span class="status-indicator ${item.bought ? 'status-confirmed' : 'status-pending'}">
+                        ${item.bought ? 'Purchased' : 'Available'}
+                    </span>
+                </div>
+                <hr style="margin: 10px 0;">
+            `;
+            container.appendChild(itemDiv);
+        });
+    }
+
+    // Add event listeners for all buttons
+    document.querySelectorAll('.registry-item-admin .btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const key = button.dataset.key;
+            const action = button.dataset.action;
+
+            if (action === 'toggle-bought') {
+                toggleBoughtStatus(key);
+            } else if (action === 'edit') {
+                editRegistryItem(key);
+            } else if (action === 'delete') {
+                deleteRegistryItem(key);
+            }
+        });
+    });
+}
+
+function toggleBoughtStatus(key) {
+    const itemRef = ref(database, `registry/${key}`);
+    const currentStatus = registryItems[key].bought || false;
+
+    update(itemRef, { bought: !currentStatus })
+        .then(() => {
+            alert('Registry item status updated!');
+            loadRegistryData();
+        })
+        .catch(error => {
+            console.error('Error updating registry item status:', error);
+            alert('Failed to update registry item status.');
+        });
+}
+
+// Function to load registry data from Firebase
+function loadRegistryData() {
+    const registryRef = ref(database, 'registry');
+    onValue(registryRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            registryItems = data;
+        } else {
+            registryItems = {};
+        }
+        renderRegistryItems();
+    });
+}
+
+
+
+// Function to add a new registry item
+document.getElementById('add-registry-item-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const name = document.getElementById('new-registry-name').value.trim();
+    const url = document.getElementById('new-registry-url').value.trim();
+    const image = document.getElementById('new-registry-image').value.trim();
+
+    if (!name || !url) {
+        alert('Please enter both item name and URL.');
+        return;
+    }
+
+    const newItem = {
+        name: name,
+        url: url,
+        image: image || null,
+        bought: false // Default to not purchased
+    };
+
+    const registryRef = ref(database, 'registry');
+    const newRegistryRef = push(registryRef);
+    set(newRegistryRef, newItem)
+        .then(() => {
+            alert('Registry item added successfully!');
+            document.getElementById('add-registry-item-form').reset();
+            loadRegistryData();
+        })
+        .catch(error => {
+            console.error('Error adding registry item:', error);
+            alert('Failed to add registry item.');
+        });
+});
+
+
+function editRegistryItem(key) {
+    const item = registryItems[key];
+    if (!item) return;
+
+    const container = document.getElementById('registry-items-admin-container');
+    const itemDiv = document.querySelector(`[data-key="${key}"]`).closest('.registry-item-admin');
+
+    itemDiv.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <label>Item Name</label>
+            <input type="text" id="edit-name" value="${item.name}" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Purchase URL</label>
+            <input type="url" id="edit-url" value="${item.url}" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Image URL</label>
+            <input type="url" id="edit-image" value="${item.image || ''}" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>
+                <input type="checkbox" id="edit-bought" ${item.bought ? 'checked' : ''}>
+                Mark as purchased
+            </label>
+        </div>
+        <div class="action-buttons" style="margin-top: 10px;">
+            <button class="btn btn-save" data-key="${key}">Save</button>
+            <button class="btn btn-cancel">Cancel</button>
+        </div>
+    `;
+
+    const saveButton = itemDiv.querySelector('.btn-save');
+    const cancelButton = itemDiv.querySelector('.btn-cancel');
+
+    saveButton.addEventListener('click', () => {
+        const newName = document.getElementById('edit-name').value.trim();
+        const newUrl = document.getElementById('edit-url').value.trim();
+        const newImage = document.getElementById('edit-image').value.trim();
+        const newBought = document.getElementById('edit-bought').checked;
+
+        if (!newName || !newUrl) {
+            alert('Please enter both item name and URL.');
+            return;
+        }
+
+        const updates = {
+            name: newName,
+            url: newUrl,
+            image: newImage,
+            bought: newBought
+        };
+
+        const itemRef = ref(database, `registry/${key}`);
+        update(itemRef, updates)
+            .then(() => {
+                alert('Registry item updated successfully!');
+                loadRegistryData();
+            })
+            .catch(error => {
+                console.error('Error updating registry item:', error);
+                alert('Failed to update registry item.');
+            });
+    });
+
+    cancelButton.addEventListener('click', () => {
+        loadRegistryData();
+    });
+}
+
+function deleteRegistryItem(key) {
+    const confirmation = confirm('Are you sure you want to delete this item?');
+    if (!confirmation) return;
+
+    const itemRef = ref(database, `registry/${key}`);
+    remove(itemRef)
+        .then(() => {
+            alert('Registry item deleted successfully!');
+            loadRegistryData();
+        })
+        .catch(error => {
+            console.error('Error deleting registry item:', error);
+            alert('Failed to delete registry item.');
+        });
+}
+
+
+
+    // Load wedding party settings
+    function loadWeddingPartySettings() {
+        const weddingPartyRef = ref(database, 'weddingParty');
+        onValue(weddingPartyRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('wedding-party-content').value = data.content || '';
+            }
+        });
+    }
+
+    // Save wedding party settings
+    document.getElementById('wedding-party-settings-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const content = document.getElementById('wedding-party-content').value;
+
+        update(ref(database, 'weddingParty'), { content: content })
+            .then(() => {
+                alert('Wedding party settings saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error saving wedding party settings:', error);
+                alert('Failed to save wedding party settings.');
+            });
+    });
+
+    // Gallery functions
+let galleryImages = {};
+
+// Function to render gallery images
+function renderGalleryImages() {
+    const container = document.getElementById('gallery-images-container');
+    container.innerHTML = ''; // Clear previous content
+
+    if (galleryImages) {
+        Object.entries(galleryImages).forEach(([key, image]) => {
+            const imageDiv = document.createElement('div');
+            imageDiv.classList.add('gallery-item-admin');  // added class
+            imageDiv.innerHTML = `
+                <div style="display:flex; gap: 15px; align-items: center; margin-bottom: 10px;">
+                    <img src="${image.url}" alt="Gallery Image" class="gallery-item-preview">
+                    <div class="action-buttons">
+                        <button class="btn btn-delete" data-key="${key}">Delete</button>
+                    </div>
+                </div>
+                <hr style="margin: 10px 0;">
+            `;
+            container.appendChild(imageDiv);
+        });
+    }
+
+    // Add event listeners to delete buttons
+    document.querySelectorAll('.gallery-item-admin .btn-delete').forEach(button => {
+        button.addEventListener('click', () => {
+            const key = button.dataset.key;
+            deleteGalleryImage(key);
+        });
+    });
+}
+
+// Function to load gallery data from Firebase
+function loadGalleryData() {
+    const galleryRef = ref(database, 'gallery/images');
+    onValue(galleryRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            galleryImages = data;
+        } else {
+            galleryImages = {};
+        }
+        renderGalleryImages();
+    });
+}
+
+// Function to add a new gallery image
+document.getElementById('add-gallery-image-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const imageUrl = document.getElementById('new-gallery-image-url').value.trim();
+
+    if (!imageUrl) {
+        alert('Please enter the image URL.');
+        return;
+    }
+
+    const newImage = {
+        url: imageUrl
+    };
+
+    const galleryRef = ref(database, 'gallery/images');
+    const newImageRef = push(galleryRef); // Use push to generate unique key
+     set(newImageRef, { "url" : imageUrl }) // Wrap the new image object
+        .then(() => {
+            alert('Image added to gallery successfully!');
+            document.getElementById('add-gallery-image-form').reset();
+            loadGalleryData();
+        })
+        .catch(error => {
+            console.error('Error adding image:', error);
+            alert('Failed to add image to gallery.');
+        });
+});
+
+
+
+function deleteGalleryImage(key) {
+    const confirmation = confirm('Are you sure you want to delete this image?');
+    if (!confirmation) return;
+
+    const imageRef = ref(database, `gallery/images/${key}`);
+    remove(imageRef)
+        .then(() => {
+            alert('Image deleted successfully!');
+            loadGalleryData();
+        })
+        .catch(error => {
+            console.error('Error deleting image:', error);
+            alert('Failed to delete image.');
+        });
+}
+
+    // Load initial data
+    loadGuestData();
+    loadEventSettings();
+    loadTravelSettings();
+    loadQASettings();
+    loadThingsSettings();
+    loadRegistryData();
+    loadWeddingPartySettings();
+    loadGalleryData();
+</script>
+</body>
+</html>
